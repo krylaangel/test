@@ -1,0 +1,12 @@
+# Unity package cache (автоматически создаётся)
+Library/
+Temp/
+Obj/
+Logs/
+UserSettings/
+MemoryCaptures/
+Build*/
+Builds/
+Packages/com.unity.collab-proxy/
+Library/PackageCache/
+Library/ScriptAssemblies/
