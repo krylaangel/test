@@ -2,23 +2,25 @@ using UnityEngine;
 
 public class PlayerCollect : MonoBehaviour
 {
+    [SerializeField] private AudioSource coinAudio;
     private int coinsCollected = 0;
 
     private void OnTriggerEnter(Collider other)
     {
-        // Проверяем, что вошли в монетку
-        if (other.CompareTag("Coin"))
+        // Проверяем, что вошли именно в монетку
+        if (!other.CompareTag("Coin")) return;
+
+        coinsCollected++;
+        Debug.Log($"Монетка подобрана! Всего: {coinsCollected}");
+
+        if (GetComponent<AudioSource>() != null)
         {
-            coinsCollected++;
-            Debug.Log("Монетка подобрана! Всего: " + coinsCollected);
-
-            AudioSource audio = other.GetComponent<AudioSource>();
-            if (audio != null)
-            {
-                audio.Play();
-            }
-
-            Destroy(other.gameObject, 0.2f);
+            GetComponent<AudioSource>().Play();
         }
+        coinAudio.Play();
+
+        coinAudio.Play();
+
+        Destroy(other.gameObject);
     }
 }
