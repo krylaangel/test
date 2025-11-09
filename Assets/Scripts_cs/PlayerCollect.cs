@@ -1,26 +1,56 @@
 using UnityEngine;
+using System;
 
 public class PlayerCollect : MonoBehaviour
 {
-    [SerializeField] private AudioSource coinAudio;
-    private int coinsCollected = 0;
+    [Header("Audio Settings")]
+    [SerializeField] private AudioSource _coinAudioSource;
+    
+    [Header("Collection Settings")]
+    [SerializeField] private string _coinTag = "Coin";
+    
+    private int _coinsCollected;
+    
+    public event Action<int> OnCoinCollected;
+    public int CoinsCollected => _coinsCollected;
 
     private void OnTriggerEnter(Collider other)
     {
-        // Проверяем, что вошли именно в монетку
-        if (!other.CompareTag("Coin")) return;
+        if (!IsValidCoin(other)) return;
+        
+        CollectCoin(other.gameObject);
+    }
 
-        coinsCollected++;
-        Debug.Log($"Монетка подобрана! Всего: {coinsCollected}");
+    private bool IsValidCoin(Collider other)
+    {
+        return other.CompareTag(_coinTag);
+    }
 
-        if (GetComponent<AudioSource>() != null)
+    private void CollectCoin(GameObject coin)
+    {
+        _coinsCollected++;
+        
+        PlayCollectionSound();
+        NotifyCoinCollected();
+        DestroyCoin(coin);
+    }
+
+    private void PlayCollectionSound()
+    {
+        if (_coinAudioSource != null)
         {
-            GetComponent<AudioSource>().Play();
+            _coinAudioSource.Play();
         }
-        coinAudio.Play();
+    }
 
-        coinAudio.Play();
+    private void NotifyCoinCollected()
+    {
+        Debug.Log($"Coin collected! Total: {_coinsCollected}");
+        OnCoinCollected?.Invoke(_coinsCollected);
+    }
 
-        Destroy(other.gameObject);
+    private void DestroyCoin(GameObject coin)
+    {
+        Destroy(coin);
     }
 }

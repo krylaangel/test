@@ -4,47 +4,90 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerMove : MonoBehaviour
 {
-    public float speed = 5f;
-    public float jumpForce = 6f;
-    private Rigidbody rb;
-    private Vector2 moveInput;
-    private bool isGrounded = true;
+    [Header("Movement Settings")]
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float jumpForce = 6f;
+    
+    [Header("Ground Check")]
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private float groundCheckDistance = 0.1f;
+    
+    private Rigidbody _rigidbody;
+    private Vector2 _moveInput;
+    private bool _isGrounded;
+    
+    private const float MOVEMENT_THRESHOLD = 0.1f;
 
-    void Start()
+    private void Awake()
     {
-        rb = GetComponent<Rigidbody>();
-        rb.freezeRotation = true;
+        _rigidbody = GetComponent<Rigidbody>();
+        _rigidbody.freezeRotation = true;
     }
 
-    void Update()
+    private void Update()
     {
-        // читаем WSAD
-        moveInput = Vector2.zero;
-        if (Keyboard.current != null)
-        {
-            if (Keyboard.current.wKey.isPressed) moveInput.y += 1;
-            if (Keyboard.current.sKey.isPressed) moveInput.y -= 1;
-            if (Keyboard.current.aKey.isPressed) moveInput.x -= 1;
-            if (Keyboard.current.dKey.isPressed) moveInput.x += 1;
+        HandleInput();
+        HandleJump();
+    }
 
-            // прыжок
-            if (Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
-            {
-                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-                isGrounded = false;
-            }
+    private void FixedUpdate()
+    {
+        HandleMovement();
+    }
+
+    private void HandleInput()
+    {
+        _moveInput = Vector2.zero;
+        
+        if (Keyboard.current == null) return;
+        
+        if (Keyboard.current.wKey.isPressed) _moveInput.y += 1;
+        if (Keyboard.current.sKey.isPressed) _moveInput.y -= 1;
+        if (Keyboard.current.aKey.isPressed) _moveInput.x -= 1;
+        if (Keyboard.current.dKey.isPressed) _moveInput.x += 1;
+    }
+
+    private void HandleJump()
+    {
+        if (Keyboard.current == null) return;
+        
+        if (Keyboard.current.spaceKey.wasPressedThisFrame && _isGrounded)
+        {
+            PerformJump();
         }
     }
 
-    void FixedUpdate()
+    private void PerformJump()
     {
-        Vector3 direction = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
-        rb.MovePosition(rb.position + direction * speed * Time.fixedDeltaTime);
+        _rigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        _isGrounded = false;
     }
 
-    void OnCollisionEnter(Collision collision)
+    private void HandleMovement()
     {
-        // Любой объект с коллайдером = земля
-        isGrounded = true;
+        if (_moveInput.magnitude < MOVEMENT_THRESHOLD) return;
+        
+        Vector3 moveDirection = new Vector3(_moveInput.x, 0f, _moveInput.y).normalized;
+        Vector3 targetPosition = _rigidbody.position + moveDirection * moveSpeed * Time.fixedDeltaTime;
+        
+        _rigidbody.MovePosition(targetPosition);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        CheckGroundCollision(collision);
+    }
+
+    private void CheckGroundCollision(Collision collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Ground") || 
+            collision.gameObject.CompareTag("Ground"))
+        {
+            _isGrounded = true;
+        }
+        else
+        {
+            _isGrounded = true;
+        }
     }
 }
